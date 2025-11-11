@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/eventos")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"}) // tu frontend
+@CrossOrigin(origins = "*") // tu frontend
 public class EventoController {
 
     private final ServicioEvento servicioEvento;

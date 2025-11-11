@@ -1,9 +1,11 @@
-FROM eclipse-temurin:23-jdk
+FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 
-COPY target/api-usuario-0.0.1-SNAPSHOT.jar app.jar
+COPY . .
+
+RUN ./mvnw -B clean package -DskipTests
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "target/api-usuario-0.0.1-SNAPSHOT.jar"]
