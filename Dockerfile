@@ -1,12 +1,18 @@
-FROM eclipse-temurin:23-jdk
+FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 COPY . .
 
-# 🔥 Solución: dar permisos de ejecución al wrapper
+# Da permisos al wrapper de Maven
 RUN chmod +x mvnw
 
+# Compila el proyecto sin ejecutar tests
 RUN ./mvnw -B clean package -DskipTests
 
+# Copia el jar compilado al directorio raíz y le da un nombre fijo
+RUN cp target/api-usuario-0.0.1-SNAPSHOT.jar app.jar
+
 EXPOSE 8080
-CMD ["java", "-jar", "target/*.jar"]
+
+# Ejecuta el jar
+CMD ["java", "-jar", "app.jar"]
