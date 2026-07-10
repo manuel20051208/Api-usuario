@@ -3,8 +3,9 @@ package com.example.apiusuario.Service;
 import com.example.apiusuario.Model.Evento;
 import com.example.apiusuario.Model.Usuario;
 import com.example.apiusuario.Respository.EventoRepository;
-import com.example.apiusuario.Respository.UsuarioRepository;
+import com.example.apiusuario.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -12,11 +13,9 @@ import java.util.List;
 public class ServicioEvento {
 
     private final EventoRepository eventoRepository;
-    private final UsuarioRepository usuarioRepository;
 
-    public ServicioEvento(EventoRepository eventoRepository, UsuarioRepository usuarioRepository) {
+    public ServicioEvento(EventoRepository eventoRepository) {
         this.eventoRepository = eventoRepository;
-        this.usuarioRepository = usuarioRepository;
     }
 
     public List<Evento> obtenerTodos() {
@@ -31,14 +30,15 @@ public class ServicioEvento {
         return eventoRepository.findByUsuarioIdAndFecha(usuarioId, fecha);
     }
 
-    public Evento crear(Evento evento) {
+    public Evento crear(Evento evento, Usuario usuario) {
+        evento.setUsuario(usuario);
         return eventoRepository.save(evento);
     }
 
     public void eliminar(Long id) {
+        if (!eventoRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Evento no encontrado");
+        }
         eventoRepository.deleteById(id);
-    }
-    public Usuario obtenerUsuarioPorEmail(String email) {
-        return usuarioRepository.findByEmail(email).orElse(null);
     }
 }

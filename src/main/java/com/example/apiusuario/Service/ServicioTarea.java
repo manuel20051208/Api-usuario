@@ -3,7 +3,10 @@ package com.example.apiusuario.Service;
 import com.example.apiusuario.Model.Tarea;
 import com.example.apiusuario.Model.Usuario;
 import com.example.apiusuario.Respository.TareaRepository;
+import com.example.apiusuario.exception.ForbiddenException;
+import com.example.apiusuario.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -14,7 +17,9 @@ public class ServicioTarea {
         this.tareaRepository = tareaRepository;
     }
 
-    public Tarea agregarTarea(Tarea tarea) {
+    public Tarea agregarTarea(Tarea tarea, Usuario usuario) {
+        tarea.setUsuario(usuario);
+
         boolean existe = tareaRepository
                 .findByUsuarioAndDescripcion(tarea.getUsuario(), tarea.getDescripcion())
                 .isPresent();
@@ -32,12 +37,11 @@ public class ServicioTarea {
 
     public void eliminarTarea(Long id, Usuario usuario) {
         Tarea tarea = tareaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada"));
 
-        // comparar por id para evitar problemas con equals mal implementados
         if (tarea.getUsuario() == null || tarea.getUsuario().getId() == null ||
                 !tarea.getUsuario().getId().equals(usuario.getId())) {
-            throw new RuntimeException("No tienes permiso para eliminar esta tarea");
+            throw new ForbiddenException("No tienes permiso para eliminar esta tarea");
         }
 
         tareaRepository.delete(tarea);
@@ -45,14 +49,13 @@ public class ServicioTarea {
 
     public Tarea toggleCompletado(Long id, Usuario usuario) {
         Tarea tarea = tareaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tarea no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada"));
 
-        // Validar que la tarea pertenece al usuario
-        if (!tarea.getUsuario().getId().equals(usuario.getId())) {
-            throw new RuntimeException("No tienes permiso para actualizar esta tarea");
+        if (tarea.getUsuario() == null || tarea.getUsuario().getId() == null ||
+                !tarea.getUsuario().getId().equals(usuario.getId())) {
+            throw new ForbiddenException("No tienes permiso para actualizar esta tarea");
         }
 
-        // Cambiar el estado de completado
         tarea.setCompletada(!tarea.isCompletada());
         return tareaRepository.save(tarea);
     }

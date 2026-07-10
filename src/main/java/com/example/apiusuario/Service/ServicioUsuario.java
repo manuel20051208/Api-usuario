@@ -1,19 +1,19 @@
 package com.example.apiusuario.Service;
 
 import com.example.apiusuario.Model.Usuario;
-import com.example.apiusuario.Respository.TareaRepository;
 import com.example.apiusuario.Respository.UsuarioRepository;
+import com.example.apiusuario.exception.ConflictException;
+import com.example.apiusuario.exception.ResourceNotFoundException;
+import com.example.apiusuario.exception.UnauthorizedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ServicioUsuario {
     private final UsuarioRepository usuarioRepository;
-    private final TareaRepository tareaRepository;
 
-    public ServicioUsuario(UsuarioRepository usuarioRepository, TareaRepository tareaRepository) {
+    public ServicioUsuario(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
-        this.tareaRepository = tareaRepository;
     }
 
     @Transactional
@@ -28,26 +28,38 @@ public class ServicioUsuario {
     public Usuario login(String email, String password) {
 
         if (usuarioRepository.findByEmail(email).isEmpty()) {
-            throw new IllegalArgumentException("Usuario no existente");
+            throw new UnauthorizedException("Usuario no existente");
         }
 
         return usuarioRepository.findByEmailAndPassword(email, password)
-                .orElseThrow(() -> new IllegalArgumentException("¡Correo y/o usuario incorrecto!"));
+                .orElseThrow(() -> new UnauthorizedException("¡Correo y/o usuario incorrecto!"));
     }
 
     public Usuario obtenerUsuarioPorEmail(String email) {
         return usuarioRepository.findByEmail(email).orElseThrow(() ->
-                new IllegalArgumentException("Usuario no encontrado"));
+                new ResourceNotFoundException("Usuario no encontrado"));
     }
 
     public Usuario obtenerUsuarioPorUsuario(String usuario) {
         return usuarioRepository.findByUsuario(usuario).orElseThrow(() ->
-                new IllegalArgumentException("Usuario no encontrado"));
+                new ResourceNotFoundException("Usuario no encontrado"));
     }
 
     public Usuario actualizarUsuarioPorToken(String emailToken, Usuario nuevosDatos) {
         Usuario existente = usuarioRepository.findByEmail(emailToken)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no existente"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no existente"));
+
+        usuarioRepository.findByEmail(nuevosDatos.getEmail())
+                .filter(usuario -> !usuario.getId().equals(existente.getId()))
+                .ifPresent(usuario -> {
+                    throw new ConflictException("El email ya está registrado");
+                });
+
+        usuarioRepository.findByUsuario(nuevosDatos.getUsuario())
+                .filter(usuario -> !usuario.getId().equals(existente.getId()))
+                .ifPresent(usuario -> {
+                    throw new ConflictException("El nombre de usuario ya está registrado");
+                });
 
         existente.setNombre(nuevosDatos.getNombre());
         existente.setUsuario(nuevosDatos.getUsuario());
@@ -57,7 +69,7 @@ public class ServicioUsuario {
 
     public void eliminarUsuario(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow(
-                () -> new IllegalArgumentException("Usuario no existente"));
+                () -> new ResourceNotFoundException("Usuario no existente"));
         usuarioRepository.delete(usuario);
     }
 }

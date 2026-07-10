@@ -1,31 +1,33 @@
 package com.example.apiusuario.Service;
 
+import com.example.apiusuario.dto.SuenoSemanaResponse;
 import com.example.apiusuario.Model.Sueno;
 import com.example.apiusuario.Model.Usuario;
 import com.example.apiusuario.Respository.SuenoRepository;
-import com.example.apiusuario.Respository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class ServicioSueno {
     private final SuenoRepository suenoRepository;
-    private final UsuarioRepository usuarioRepository;
 
-    public ServicioSueno(SuenoRepository suenoRepository, UsuarioRepository usuarioRepository) {
+    public ServicioSueno(SuenoRepository suenoRepository) {
         this.suenoRepository = suenoRepository;
-        this.usuarioRepository = usuarioRepository;
+    }
+
+    public List<Sueno> listarPorUsuario(Usuario usuario) {
+        return suenoRepository.findByUsuario(usuario);
     }
 
     public Sueno registrarSueno(Sueno sueno, Usuario usuario) {
-        // Asignar el usuario del token al sueño
         sueno.setUsuario(usuario);
 
-        // Calcular horas dormidas automáticamente si ambas horas están presentes
         if (sueno.getHoraDormir() != null && sueno.getHoraDespertar() != null) {
             Duration duracion = Duration.between(sueno.getHoraDormir(), sueno.getHoraDespertar());
-            // Si la hora de despertar es antes de dormir (dormir de noche a mañana)
             if (duracion.isNegative()) {
                 duracion = duracion.plusHours(24);
             }
@@ -33,5 +35,20 @@ public class ServicioSueno {
         }
 
         return suenoRepository.save(sueno);
+    }
+
+    public List<SuenoSemanaResponse> obtenerResumenSemana(Usuario usuario) {
+        LocalDate hoy = LocalDate.now();
+        LocalDate inicioSemana = hoy.with(DayOfWeek.MONDAY);
+
+        return suenoRepository
+                .findByUsuarioAndFechaBetweenOrderByFechaAsc(usuario, inicioSemana, hoy)
+                .stream()
+                .map(sueno -> new SuenoSemanaResponse(
+                        sueno.getFecha(),
+                        sueno.getHorasDormidas(),
+                        sueno.getCalidad()
+                ))
+                .toList();
     }
 }
