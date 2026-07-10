@@ -1,7 +1,3 @@
--- PostgreSQL local setup.
--- Run with psql as a user allowed to create databases:
--- psql -U postgres -f src/main/resources/db/local/create-local-database.sql
-
 SELECT 'CREATE DATABASE api_usuario_local'
 WHERE NOT EXISTS (
     SELECT 1
