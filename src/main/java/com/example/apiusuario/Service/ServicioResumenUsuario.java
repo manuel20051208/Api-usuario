@@ -7,21 +7,18 @@ import com.example.apiusuario.Respository.SuenoRepository;
 import com.example.apiusuario.Respository.TareaRepository;
 import com.example.apiusuario.dto.RegistroSuenoResumenResponse;
 import com.example.apiusuario.dto.ResumenUsuarioResponse;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
+@AllArgsConstructor
 @Service
 public class ServicioResumenUsuario {
     private final SuenoRepository suenoRepository;
     private final TareaRepository tareaRepository;
-
-    public ServicioResumenUsuario(SuenoRepository suenoRepository, TareaRepository tareaRepository) {
-        this.suenoRepository = suenoRepository;
-        this.tareaRepository = tareaRepository;
-    }
 
     public ResumenUsuarioResponse obtenerResumen(Usuario usuario) {
         LocalDate hoy = LocalDate.now();

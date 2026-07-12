@@ -3,6 +3,7 @@ package com.example.apiusuario.Service;
 import com.example.apiusuario.Model.Evento;
 import com.example.apiusuario.Model.Usuario;
 import com.example.apiusuario.Respository.EventoRepository;
+import com.example.apiusuario.exception.ForbiddenException;
 import com.example.apiusuario.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -35,10 +36,15 @@ public class ServicioEvento {
         return eventoRepository.save(evento);
     }
 
-    public void eliminar(Long id) {
-        if (!eventoRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Evento no encontrado");
+    public void eliminar(Long id, Usuario usuario) {
+        Evento evento = eventoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado"));
+
+        if (evento.getUsuario() == null || evento.getUsuario().getId() == null ||
+                !evento.getUsuario().getId().equals(usuario.getId())) {
+            throw new ForbiddenException("No tienes permiso para eliminar este evento");
         }
-        eventoRepository.deleteById(id);
+
+        eventoRepository.delete(evento);
     }
 }
